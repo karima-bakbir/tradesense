@@ -1,0 +1,9 @@
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-RESTful==0.3.10
+Flask-CORS==4.0.0
+Werkzeug==2.3.7
+yfinance==0.2.18
+beautifulsoup4==4.12.2
+requests==2.31.0
+apscheduler==3.10.4
