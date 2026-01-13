@@ -7,3 +7,4 @@ yfinance==0.2.18
 beautifulsoup4==4.12.2
 requests==2.31.0
 apscheduler==3.10.4
+gunicorn==21.2.0

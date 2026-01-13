@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_cors import CORS
 from models import db
@@ -10,13 +11,20 @@ from routes.ai_signals import ai_signals_bp
 
 def create_app():
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tradesense.db'
+    # Use PostgreSQL in production, SQLite in development
+    DATABASE_URL = os.environ.get('DATABASE_URL') or 'sqlite:///tradesense.db'
+    # Remove 'postgres://' prefix if present (for compatibility with newer Heroku)
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = 'your-secret-key-here'
 
     # Initialize extensions
     db.init_app(app)
-    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)  # Enable CORS for all origins during development
+    # Configure CORS - allow all origins during development, restrict in production
+    cors_origins = os.environ.get('CORS_ORIGINS', '*')
+    CORS(app, resources={r"/*": {"origins": cors_origins}}, supports_credentials=True)
     
     # Register blueprints
     app.register_blueprint(users_bp)
@@ -34,4 +42,5 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))  # Use PORT environment variable or default to 5000
+    app.run(host='0.0.0.0', port=port, debug=False)

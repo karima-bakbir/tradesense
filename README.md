@@ -23,6 +23,14 @@ TradeSense AI is an advanced trading platform that combines artificial intellige
 
 ## Setup Instructions
 
+### Environment Variables
+Create a `.env` file in the project root with the following variables:
+```
+SECRET_KEY=your-secret-key-here
+DATABASE_URL=sqlite:///tradesense.db
+CORS_ORIGINS=*
+```
+
 ### Backend Setup
 1. Navigate to the project directory
 2. Install Python dependencies:
@@ -44,11 +52,15 @@ TradeSense AI is an advanced trading platform that combines artificial intellige
    ```bash
    npm install
    ```
-3. Start the development server:
+3. Create a `.env` file in the frontend directory with the API URL:
+   ```
+   REACT_APP_API_URL=http://localhost:5000
+   ```
+4. Start the development server:
    ```bash
    npm start
    ```
-4. The frontend runs on `http://localhost:3000`
+5. The frontend runs on `http://localhost:3000`
 
 ## Data Sources
 
@@ -71,6 +83,17 @@ tradesense/
 ├── frontend/              # React frontend application
 └── README.md              # Project documentation
 ```
+
+## Deployment
+
+The application can be deployed to cloud platforms like Render.com:
+
+1. Create a new Web Service on Render
+2. Connect your GitHub repository
+3. Set the Root Directory to the project root
+4. Use the build command: `pip install -r requirements.txt`
+5. Use the start command: `gunicorn --bind 0.0.0.0:$PORT app:app`
+6. Set environment variables as needed
 
 ## License
 
