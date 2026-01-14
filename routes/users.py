@@ -2,6 +2,9 @@ from flask import Blueprint, request, jsonify
 from models import User, db
 from werkzeug.security import check_password_hash
 import re
+import jwt
+import datetime
+from flask import current_app
 
 users_bp = Blueprint('users', __name__)
 
@@ -37,14 +40,66 @@ def register():
         db.session.add(user)
         db.session.commit()
         
+        # Generate JWT token
+        import os
+        secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+        token = jwt.encode({
+            'user_id': user.id,
+            'username': user.username,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)  # Token expires in 24 hours
+        }, secret_key, algorithm='HS256')
+        
         return jsonify({
             'message': 'User registered successfully',
+            'token': token,
             'user_id': user.id,
             'username': user.username
         }), 201
         
     except Exception as e:
         db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@users_bp.route('/profile', methods=['GET'])
+def get_profile():
+    try:
+        token = request.headers.get('Authorization')
+        
+        if not token:
+            return jsonify({'error': 'Token is missing'}), 401
+        
+        # Remove 'Bearer ' prefix if present
+        if token.startswith('Bearer '):
+            token = token[7:]
+        
+        try:
+            # Decode the token
+            import os
+            secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+            data = jwt.decode(token, secret_key, algorithms=['HS256'])
+            user_id = data['user_id']
+            
+            # Get user from database
+            user = User.query.get(user_id)
+            
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            
+            return jsonify({
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email
+                }
+            }), 200
+            
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token has expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+            
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
@@ -64,8 +119,18 @@ def login():
         if not user or not user.check_password(password):
             return jsonify({'error': 'Invalid credentials'}), 401
         
+        # Generate JWT token
+        import os
+        secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+        token = jwt.encode({
+            'user_id': user.id,
+            'username': user.username,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)  # Token expires in 24 hours
+        }, secret_key, algorithm='HS256')
+        
         return jsonify({
             'message': 'Login successful',
+            'token': token,
             'user_id': user.id,
             'username': user.username
         }), 200

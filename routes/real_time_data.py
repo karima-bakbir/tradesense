@@ -1,6 +1,46 @@
 from flask import Blueprint, request, jsonify
 from real_time_data import get_cached_price, get_international_price
 from services.morocco_scraper import get_morocco_stock_price
+# Import news service
+try:
+    # Try importing from backend services
+    import sys
+    import os
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    backend_services_path = os.path.join(current_dir, '..', '..', 'backend', 'services')
+    sys.path.insert(0, backend_services_path)
+    from news_service import news_service
+except ImportError:
+    # If backend import fails, try root services
+    try:
+        from services.news_service import news_service
+    except ImportError:
+        # Define a fallback news service if the service is not available
+        class NewsService:
+            def get_financial_news(self):
+                # Return mock news data as fallback
+                return [
+                    {
+                        'id': 1,
+                        'title': 'Markets show resilience amid economic uncertainty',
+                        'description': 'Global markets demonstrate stability despite ongoing challenges.',
+                        'source': 'Financial News',
+                        'time': 'Il y a 15 minutes',
+                        'type': 'general',
+                        'priority': 'medium'
+                    },
+                    {
+                        'id': 2,
+                        'title': 'Federal Reserve maintains cautious stance',
+                        'description': 'Central bank signals potential pause in rate hikes.',
+                        'source': 'Reuters',
+                        'time': 'Il y a 45 minutes',
+                        'type': 'economic',
+                        'priority': 'high'
+                    }
+                ]
+        
+        news_service = NewsService()
 
 # Alias the new function to maintain compatibility
 get_moroccan_price = get_morocco_stock_price
@@ -62,6 +102,18 @@ def get_multiple_prices():
             'timestamp': get_cached_price(list(tickers)[0])['timestamp'] if tickers else None
         }), 200
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@real_time_data_bp.route('/api/news/financial', methods=['GET'])
+def get_financial_news():
+    """
+    Get the latest financial news
+    """
+    try:
+        news_items = news_service.get_financial_news()
+        return jsonify(news_items), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

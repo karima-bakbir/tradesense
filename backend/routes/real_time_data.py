@@ -8,6 +8,7 @@ from datetime import datetime
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
+from services.news_service import news_service
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -299,6 +300,18 @@ def get_price(ticker):
             'error': str(e),
             'symbol': ticker
         }), 500
+
+
+@real_time_data_bp.route('/api/news/financial', methods=['GET'])
+def get_financial_news():
+    """
+    Get the latest financial news
+    """
+    try:
+        news_items = news_service.get_financial_news()
+        return jsonify(news_items), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @real_time_data_bp.route('/api/prices', methods=['POST'])

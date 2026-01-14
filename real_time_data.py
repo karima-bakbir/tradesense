@@ -223,5 +223,36 @@ scheduler.add_job(
     replace_existing=True
 )
 
+# Import news service
+try:
+    from services.news_service import news_service
+except ImportError:
+    # Define a fallback news service if the service is not available
+    class NewsService:
+        def get_financial_news(self):
+            # Return mock news data as fallback
+            return [
+                {
+                    'id': 1,
+                    'title': 'Markets show resilience amid economic uncertainty',
+                    'description': 'Global markets demonstrate stability despite ongoing challenges.',
+                    'source': 'Financial News',
+                    'time': 'Il y a 15 minutes',
+                    'type': 'general',
+                    'priority': 'medium'
+                },
+                {
+                    'id': 2,
+                    'title': 'Federal Reserve maintains cautious stance',
+                    'description': 'Central bank signals potential pause in rate hikes.',
+                    'source': 'Reuters',
+                    'time': 'Il y a 45 minutes',
+                    'type': 'economic',
+                    'priority': 'high'
+                }
+            ]
+    
+    news_service = NewsService()
+
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
