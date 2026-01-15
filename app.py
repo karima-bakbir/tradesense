@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from models import db
 from routes.users import users_bp
@@ -10,7 +10,7 @@ from routes.ai_signals import ai_signals_bp
 
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='frontend/build', static_url_path='/static')
     # Use PostgreSQL in production, SQLite in development
     DATABASE_URL = os.environ.get('DATABASE_URL') or 'sqlite:///tradesense.db'
     # Remove 'postgres://' prefix if present (for compatibility with newer Heroku)
@@ -33,6 +33,15 @@ def create_app():
     app.register_blueprint(real_time_data_bp)
     app.register_blueprint(ai_signals_bp)
     
+    # Serve React App
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve(path):
+        if path != "" and os.path.exists(app.static_folder + '/' + path):
+            return send_from_directory(app.static_folder, path)
+        else:
+            return send_from_directory(app.static_folder, 'index.html')
+    
     # Create tables
     with app.app_context():
         db.create_all()
@@ -40,7 +49,9 @@ def create_app():
     return app
 
 
+# Create the app instance for Gunicorn
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
     port = int(os.environ.get('PORT', 5000))  # Use PORT environment variable or default to 5000
     app.run(host='0.0.0.0', port=port, debug=False)

@@ -1,0 +1,17 @@
+# Railway Configuration File
+
+[build]
+builder = "heroku/buildpacks:20"
+
+[build.args]
+NODE_VERSION = "18.x"
+PYTHON_VERSION = "3.10.13"
+
+[deploy]
+numReplicas = 1
+sleepApplication = false
+
+[env]
+PORT = "8000"
+SECRET_KEY = "your-secret-key-here"
+DATABASE_URL = "sqlite:///tradesense.db"

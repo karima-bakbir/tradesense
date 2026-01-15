@@ -86,7 +86,21 @@ tradesense/
 
 ## Deployment
 
-The application can be deployed to cloud platforms like Render.com:
+The application can be deployed to cloud platforms like Railway.app:
+
+### Deploy to Railway
+
+1. Create an account at [Railway.app](https://railway.app)
+2. Create a new project and connect your GitHub repository
+3. Select the repository and branch to deploy
+4. Railway will automatically detect this as a Python project
+5. The Procfile already contains the correct start command: `web: gunicorn --bind 0.0.0.0:$PORT app:app`
+6. Set environment variables as needed:
+   - SECRET_KEY: your secret key for Flask
+   - DATABASE_URL: PostgreSQL database URL (or leave empty for SQLite)
+7. Click Deploy
+
+### Alternative: Deploy to Render
 
 1. Create a new Web Service on Render
 2. Connect your GitHub repository
