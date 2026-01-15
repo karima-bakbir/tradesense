@@ -12,7 +12,15 @@ users_bp = Blueprint('users', __name__)
 @users_bp.route('/register', methods=['POST'])
 def register():
     try:
-        data = request.get_json()
+        # Handle JSON parsing more robustly
+        data = request.get_json(force=True)  # force=True to parse even if content-type is not set correctly
+        if not data:
+            # Fallback to manual parsing
+            try:
+                import json
+                data = json.loads(request.get_data(as_text=True))
+            except:
+                return jsonify({'error': 'Invalid JSON data'}), 400
         
         # Validate required fields
         if not data or not all(k in data for k in ('username', 'email', 'password')):
@@ -52,8 +60,11 @@ def register():
         return jsonify({
             'message': 'User registered successfully',
             'token': token,
-            'user_id': user.id,
-            'username': user.username
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email
+            }
         }), 201
         
     except Exception as e:
@@ -106,7 +117,15 @@ def get_profile():
 @users_bp.route('/login', methods=['POST'])
 def login():
     try:
-        data = request.get_json()
+        # Handle JSON parsing more robustly
+        data = request.get_json(force=True)  # force=True to parse even if content-type is not set correctly
+        if not data:
+            # Fallback to manual parsing
+            try:
+                import json
+                data = json.loads(request.get_data(as_text=True))
+            except:
+                return jsonify({'error': 'Invalid JSON data'}), 400
         
         if not data or not all(k in data for k in ('username', 'password')):
             return jsonify({'error': 'Username and password are required'}), 400
@@ -131,8 +150,11 @@ def login():
         return jsonify({
             'message': 'Login successful',
             'token': token,
-            'user_id': user.id,
-            'username': user.username
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email
+            }
         }), 200
         
     except Exception as e:
