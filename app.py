@@ -1,5 +1,5 @@
 import os
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request
 from flask_cors import CORS
 from models import db
 from routes.users import users_bp
@@ -10,7 +10,7 @@ from routes.ai_signals import ai_signals_bp
 
 
 def create_app():
-    app = Flask(__name__, static_folder='frontend/build', static_url_path='/static')
+    app = Flask(__name__, static_folder='frontend/build/static', static_url_path='/static')
     # Use PostgreSQL in production, SQLite in development
     DATABASE_URL = os.environ.get('DATABASE_URL') or 'sqlite:///tradesense.db'
     # Remove 'postgres://' prefix if present (for compatibility with newer Heroku)
@@ -33,14 +33,36 @@ def create_app():
     app.register_blueprint(real_time_data_bp)
     app.register_blueprint(ai_signals_bp)
     
-    # Serve React App
-    @app.route('/', defaults={'path': ''})
+    # API root endpoint for API requests
+    @app.route('/', methods=['GET'])
+    def home():
+        # Check if the request is for API (JSON) or web browser
+        if request.headers.get('Content-Type') == 'application/json' or \
+           request.headers.get('Accept') == 'application/json' or \
+           request.path.startswith('/api/'):
+            return {"message": "TradeSense API is running", "status": "success"}
+        else:
+            # For web browsers, serve the React app
+            build_folder = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
+            return send_from_directory(build_folder, 'index.html')
+    
+    # Serve React static files
+    @app.route('/static/<path:filename>')
+    def serve_static(filename):
+        build_folder = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
+        return send_from_directory(os.path.join(build_folder, 'static'), filename)
+    
+    # Serve React App for frontend routes
     @app.route('/<path:path>')
     def serve(path):
-        if path != "" and os.path.exists(app.static_folder + '/' + path):
-            return send_from_directory(app.static_folder, path)
+        build_folder = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
+        # Don't serve index.html for static files or API routes
+        if path.startswith('static/') or path.startswith('api/'):
+            return send_from_directory(build_folder, path)
+        elif path != "" and os.path.exists(os.path.join(build_folder, path)):
+            return send_from_directory(build_folder, path)
         else:
-            return send_from_directory(app.static_folder, 'index.html')
+            return send_from_directory(build_folder, 'index.html')
     
     # Create tables
     with app.app_context():
