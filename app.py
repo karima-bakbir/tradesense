@@ -33,28 +33,23 @@ def create_app():
     app.register_blueprint(real_time_data_bp)
     app.register_blueprint(ai_signals_bp)
     
-    # API root endpoint for API requests
-    @app.route('/', methods=['GET'])
-    def home():
-        # Check if the request is for API (JSON) or web browser
-        accept_header = request.headers.get('Accept', '')
-        user_agent = request.headers.get('User-Agent', '').lower()
+    # Serve React App (catch-all route)
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_react_app(path=''):
+        build_folder = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
         
-        # Detect if it's a browser request
-        is_browser = any(browser in user_agent for browser in ['mozilla', 'chrome', 'safari', 'firefox', 'edge'])
+        # If it's a specific file that exists, serve it
+        if path and os.path.exists(os.path.join(build_folder, path)):
+            return send_from_directory(build_folder, path)
         
-        if 'application/json' in accept_header or request.is_json or is_browser:
-            if is_browser:
-                # For web browsers, serve the React app
-                build_folder = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
-                return send_from_directory(build_folder, 'index.html')
-            else:
-                # For API requests
-                return {"message": "TradeSense API is running", "status": "success"}
-        else:
-            # Default to React app for unknown requests
-            build_folder = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
-            return send_from_directory(build_folder, 'index.html')
+        # Otherwise serve the React app (index.html)
+        return send_from_directory(build_folder, 'index.html')
+    
+    # Simple API health check
+    @app.route('/api/health')
+    def health_check():
+        return {"message": "TradeSense API is running", "status": "success"}
     
     # Serve React static files
     @app.route('/static/<path:filename>')
