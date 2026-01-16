@@ -37,12 +37,22 @@ def create_app():
     @app.route('/', methods=['GET'])
     def home():
         # Check if the request is for API (JSON) or web browser
-        if request.headers.get('Content-Type') == 'application/json' or \
-           request.headers.get('Accept') == 'application/json' or \
-           request.path.startswith('/api/'):
-            return {"message": "TradeSense API is running", "status": "success"}
+        accept_header = request.headers.get('Accept', '')
+        user_agent = request.headers.get('User-Agent', '').lower()
+        
+        # Detect if it's a browser request
+        is_browser = any(browser in user_agent for browser in ['mozilla', 'chrome', 'safari', 'firefox', 'edge'])
+        
+        if 'application/json' in accept_header or request.is_json or is_browser:
+            if is_browser:
+                # For web browsers, serve the React app
+                build_folder = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
+                return send_from_directory(build_folder, 'index.html')
+            else:
+                # For API requests
+                return {"message": "TradeSense API is running", "status": "success"}
         else:
-            # For web browsers, serve the React app
+            # Default to React app for unknown requests
             build_folder = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
             return send_from_directory(build_folder, 'index.html')
     
