@@ -5,13 +5,10 @@ services:
     region: frankfurt  # or oregon, singapore based on your preference
     plan: free
     buildCommand: |
-      pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 1 wsgi:application
-    # Ensure build runs from root directory
-    buildCommand: |
       pwd
       ls -la
       pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 1 wsgi:application
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.13
