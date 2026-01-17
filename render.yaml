@@ -5,16 +5,13 @@ services:
     region: frankfurt  # or oregon, singapore based on your preference
     plan: free
     buildCommand: |
-      echo "Current directory:" && pwd
-      echo "Files in directory:" && ls -la
-      echo "Checking for requirements.txt:"
-      if [ -f requirements.txt ]; then
-        echo "✓ requirements.txt found"
-        pip install -r requirements.txt
-      else
-        echo "✗ requirements.txt not found!"
-        exit 1
-      fi
+      echo "Build starting in directory: $(pwd)"
+      echo "Contents of current directory:"
+      ls -la
+      echo "Looking for requirements.txt in current directory:"
+      find . -name "requirements.txt" -type f
+      echo "Attempting to install dependencies:"
+      pip install -r requirements.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 1 wsgi:application
     envVars:
       - key: PYTHON_VERSION
